@@ -5,7 +5,7 @@
 @File: app.py
 """
 
-from flask import Flask, url_for, request, session, redirect
+from flask import Flask, url_for, request, session, redirect, render_template
 from urllib.parse import urlparse
 
 app = Flask(__name__)
@@ -30,11 +30,10 @@ def login():
 @app.route('/needlogin1/')
 def needLogin1():
     if 'loginID' in session:
-        return '<h1>Hello, needLogin1!</h1>'
+        user = 'needLogin1'
+        return render_template('hello.html', user=user)
     else:
-        return """
-            <h1>Login</h1><a href="%s">Go To Login</a>
-                """ % url_for('login', next=request.url)
+        return render_template('needlogin.html')
 
 
 @app.route('/needlogin2/')
