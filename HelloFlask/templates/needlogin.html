@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Web</title>
-</head>
-<body>
-<h1>Login</h1><a href="{{ url_for('login', next=request.url) }}">Go To Login</a>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}My Web - Index{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Login</h1><a href="{{ url_for('login', next=request.url) }}">Go To Login</a>
+</div> {% endblock %}

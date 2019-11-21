@@ -5,11 +5,13 @@
 @File: app.py
 """
 
-from flask import Flask, url_for, request, session, redirect, render_template
+from flask import Flask, url_for, request, session, redirect, render_template, flash
 from urllib.parse import urlparse
+from flask_bootstrap import Bootstrap
 
 app = Flask(__name__)
 app.secret_key = 'Very Hard Secret'
+bootstrap = Bootstrap(app)
 
 
 def check_next(target):
@@ -22,6 +24,7 @@ def check_next(target):
 def login():
     session['loginID'] = 'admin'
     target = request.args.get('next')
+    flash(u"你登陆成功了！")
     if check_next(target):
         return redirect(target)
     return redirect(url_for('hello'))

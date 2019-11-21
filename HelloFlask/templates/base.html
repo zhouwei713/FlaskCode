@@ -1,0 +1,38 @@
+{% extends "bootstrap/base.html" %} 
+
+<head>
+{% block head%}
+    {{ super() }}
+    <meta charset="utf-8">
+    <title>
+    {% block title %}My Web{% endblock %}
+    </title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico')}}">
+{% endblock %}
+</head>
+
+{% block navbar %}
+<div class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse"> <span class="icon icon-bar"></span> <span class="icon icon-bar"></span> <span class="icon icon-bar"></span> </button>
+                <a href="#" class="navbar-brand">HelloFlask</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#home" class="smoothScroll">首页</a></li>
+                    <li><a href="#intro" class="smoothScroll">网站简介</a></li>
+                    <li><a href="#team" class="smoothScroll">风格</a></li>
+                    <li><a href="#portfolio" class="smoothScroll">作品</a></li>
+                    <li><a href="#contact" class="smoothScroll">联系我们</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% block page_content %}{% endblock %}
+</div>
+{% endblock %}

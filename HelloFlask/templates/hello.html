@@ -1,10 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<h1>Hello, {{ user }}!</h1>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}My Web - Index{% endblock %}
+
+
+{% block page_content %}
+
+{% for message in get_flashed_messages() %}
+ <div class="alert alert-warning">
+     <button type="button" class="close" data-dismiss="alert">&times;</button>
+     {{ message }}
+ </div>
+{% endfor %}
+<div class="page-header">
+    <h1>Hello, {{ user }}!</h1>
+</div>
+{% endblock %}
