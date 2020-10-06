@@ -5,13 +5,54 @@
 @File: app.py
 """
 
-from flask import Flask, url_for, request, session, redirect, render_template, flash
+from flask import Flask, url_for, request, session, redirect, render_template, flash, send_from_directory
 from urllib.parse import urlparse
 from flask_bootstrap import Bootstrap
+from flask_wtf import FlaskForm
+from flask_wtf.file import file_required, file_allowed
+from wtforms import StringField, PasswordField, FileField, SubmitField
+from wtforms.validators import DataRequired, Length
+import os
+
 
 app = Flask(__name__)
 app.secret_key = 'Very Hard Secret'
+app.config['UPLOAD_PATH'] = os.path.join(app.root_path, 'uploads')
 bootstrap = Bootstrap(app)
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired(), Length(4, 10)])
+    submit = SubmitField('Login')
+
+
+class UploadForm(FlaskForm):
+    photo = FileField('Upload Image', validators=[file_required(), file_allowed(['png', 'jpg'])])
+    submit = SubmitField('Upload')
+
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    form = UploadForm()
+    if form.validate_on_submit():
+        f = form.photo.data
+        filename = f.filename
+        f.save(os.path.join(app.config['UPLOAD_PATH'], filename))
+        flash('上传图片文件成功！')
+        session['filename'] = filename
+        return redirect(url_for('show_images'))
+    return render_template('upload.html', form=form)
+
+
+@app.route('/uploads/<path:filename>')
+def get_file(filename):
+    return send_from_directory(app.config['UPLOAD_PATH'], filename)
+
+
+@app.route('/uploaded-images')
+def show_images():
+    return render_template('uploaded.html')
 
 
 def check_next(target):
@@ -20,14 +61,21 @@ def check_next(target):
     return ref_url.netloc == test_url.netloc
 
 
-@app.route('/login/')
+@app.route('/login/', methods=['GET', 'POST'])
 def login():
-    session['loginID'] = 'admin'
-    target = request.args.get('next')
-    flash(u"你登陆成功了！")
-    if check_next(target):
-        return redirect(target)
-    return redirect(url_for('hello'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        session['username'] = username
+        flash("登录成功，%s！" % username)
+        return redirect(url_for('index'))
+    return render_template('login.html', form=form)
+
+
+@app.route('/')
+def index():
+    user = session.get('username')
+    return render_template('index.html', user=user)
 
 
 @app.route('/needlogin1/')

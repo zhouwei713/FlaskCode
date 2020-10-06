@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}My Web - Upload{% endblock %}
+
+
+{% block page_content %}
+
+{% for message in get_flashed_messages() %}
+ <div class="alert alert-warning">
+     <button type="button" class="close" data-dismiss="alert">&times;</button>
+     {{ message }}
+ </div>
+{% endfor %}
+{% if session.filename %}
+<a href="{{ url_for('get_file', filename=session.filename) }}" target="_blank">
+    <img src="{{ url_for('get_file', filename=session.filename) }}">
+</a>
+{% endif %}
+
+
+{% endblock %}
