@@ -13,12 +13,33 @@ from flask_wtf.file import file_required, file_allowed
 from wtforms import StringField, PasswordField, FileField, SubmitField
 from wtforms.validators import DataRequired, Length
 import os
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 
 app = Flask(__name__)
 app.secret_key = 'Very Hard Secret'
+basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['UPLOAD_PATH'] = os.path.join(app.root_path, 'uploads')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 bootstrap = Bootstrap(app)
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    users = db.relationship('User', backref='role')
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, index=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
 
 class LoginForm(FlaskForm):
@@ -39,7 +60,7 @@ def upload():
         f = form.photo.data
         filename = f.filename
         f.save(os.path.join(app.config['UPLOAD_PATH'], filename))
-        flash('上传图片文件成功！')
+        flash('Upload file successful!')
         session['filename'] = filename
         return redirect(url_for('show_images'))
     return render_template('upload.html', form=form)
@@ -67,7 +88,10 @@ def login():
     if form.validate_on_submit():
         username = form.username.data
         session['username'] = username
-        flash("登录成功，%s！" % username)
+        user = User(username=username)
+        db.session.add(user)
+        db.session.commit()
+        flash("Login Successful!")
         return redirect(url_for('index'))
     return render_template('login.html', form=form)
 
@@ -75,7 +99,12 @@ def login():
 @app.route('/')
 def index():
     user = session.get('username')
-    return render_template('index.html', user=user)
+    isUser = User.query.filter_by(username=user).first()
+    if isUser is None:
+        session['known'] = False
+    else:
+        session['known'] = True
+    return render_template('index.html', user=user, known=session.get('known', False))
 
 
 @app.route('/needlogin1/')
@@ -108,7 +137,7 @@ def hello():
     return 'Hello Flask!'
 
 
-@app.route('/user/', defaults={'name': '陌生人'})
+@app.route('/user/', defaults={'name': 'No User'})
 @app.route('/user/<name>')
 def welcome(name):
     res = '<h1>Hello, %s!</h1>' % name
