@@ -10,11 +10,13 @@ from urllib.parse import urlparse
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from flask_wtf.file import file_required, file_allowed
-from wtforms import StringField, PasswordField, FileField, SubmitField
+from wtforms import StringField, PasswordField, FileField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length
 import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_mail import Mail, Message
+from threading import Thread
 
 
 app = Flask(__name__)
@@ -23,9 +25,24 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['UPLOAD_PATH'] = os.path.join(app.root_path, 'uploads')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config['MAIL_SERVER'] = 'smtp.163.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+# app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_USERNAME'] = 'mowuxue1989@163.com'
+app.config['MAIL_PASSWORD'] = 'PJIKJQNZJJWDOLTA'
+# app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+mail = Mail(app)
+
+
+def send_email(to, subject, bogy):
+    print(app.config['MAIL_PASSWORD'])
+    print(app.config['MAIL_USERNAME'])
+    msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to], body=bogy)
+    mail.send(msg)
 
 
 class Role(db.Model):
@@ -51,6 +68,36 @@ class LoginForm(FlaskForm):
 class UploadForm(FlaskForm):
     photo = FileField('Upload Image', validators=[file_required(), file_allowed(['png', 'jpg'])])
     submit = SubmitField('Upload')
+
+
+class SendEmailForm(FlaskForm):
+    emailAddress = StringField('Email Address', validators=[DataRequired()])
+    message = TextAreaField()
+    submit = SubmitField("Send")
+
+
+@app.route('/sendemail', methods=['GET', 'POST'])
+def sendemail():
+    form = SendEmailForm()
+    if form.validate_on_submit():
+        eAddress = form.emailAddress.data
+        message = form.message.data
+        flash("Start Send Email!")
+        send_email(eAddress, "My Email", message)
+        return redirect(url_for('index'))
+    return render_template('email.html', form=form)
+
+
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
+
+def send_email_saync(to, subject, body):
+    msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to], body=body)
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()
+    return thr
 
 
 @app.route('/upload', methods=['GET', 'POST'])
